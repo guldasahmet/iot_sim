@@ -89,4 +89,4 @@ Tek sayfada sensör analiz sonuçları alt alta gösterilecek şekilde tasarlanm
 - Haberleşme topic'i ve JSON formatı raporda belirtilen kurallara uygun olmalıdır.
 
 ---
-Geliştirici: Ahmet
+Geliştirici
