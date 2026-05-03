@@ -7,7 +7,7 @@ from datetime import datetime
 # --- AYARLAR ---
 BROKER = "127.0.0.1" # Yerel MQTT Broker adresi
 PORT = 1883
-TOPIC = "btu_01/telemetry" # Ödevde istenen topic formatı
+TOPIC = "btu_01/telemetry" 
 
 # MQTT İstemcisini oluştur
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, "Simulasyon_Publisher")
