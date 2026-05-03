@@ -23,7 +23,7 @@ try:
         sanal_isik = random.randint(200, 800)
         zaman = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        # Proje evrakındaki JSON formatı
+        # JSON formatı
         veri_paketi = {
             "sensor_id": "temp_01",
             "values": {
@@ -41,8 +41,8 @@ try:
         
         print(f"[BAŞARILI] Yayınlandı: Sıcaklık={sanal_sicaklik}°C, Nem=%{sanal_nem}, Işık={sanal_isik}")
 
-        # 5 saniyede bir gönder (Ödevde periyodik dendiği için bekleme süresini test için 2 sn yapabilirsin)
-        time.sleep(2)
+        # Saniyede 1 kez gönder 
+        time.sleep(1)
 
 except KeyboardInterrupt:
     client.disconnect()
