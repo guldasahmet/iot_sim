@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>IoT Sera Simülasyonu</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .sensor-container { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; }
+        .grafik-alani { width: 70%; }
+        .istatistik-alani { width: 30%; padding-left: 20px; border-left: 2px solid #eee; display: flex; flex-direction: column; justify-content: center; }
+        .istatistik-alani p { font-size: 16px; margin: 5px 0; }
+        .deger { font-weight: bold; color: #333; }
+        h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h2>🌱 IoT Sera Otomasyonu - Sensör Verileri</h2>
+
+    <!-- SICAKLIK KARTI -->
+    <div class="sensor-container">
+        <div class="grafik-alani"><canvas id="sicaklikGrafik"></canvas></div>
+        <div class="istatistik-alani">
+            <h3>Sıcaklık (°C)</h3>
+            <p>Min: <span class="deger" id="sicaklikMin">-</span></p>
+            <p>Max: <span class="deger" id="sicaklikMax">-</span></p>
+            <p>Ort: <span class="deger" id="sicaklikOrt">-</span></p>
+            <p>Varyans: <span class="deger" id="sicaklikVaryans">-</span></p>
+        </div>
+    </div>
+
+    <!-- NEM KARTI -->
+    <div class="sensor-container">
+        <div class="grafik-alani"><canvas id="nemGrafik"></canvas></div>
+        <div class="istatistik-alani">
+            <h3>Nem (%)</h3>
+            <p>Min: <span class="deger" id="nemMin">-</span></p>
+            <p>Max: <span class="deger" id="nemMax">-</span></p>
+            <p>Ort: <span class="deger" id="nemOrt">-</span></p>
+            <p>Varyans: <span class="deger" id="nemVaryans">-</span></p>
+        </div>
+    </div>
+
+    <!-- IŞIK KARTI (Yeni Eklendi) -->
+    <div class="sensor-container">
+        <div class="grafik-alani"><canvas id="isikGrafik"></canvas></div>
+        <div class="istatistik-alani">
+            <h3>Işık Miktarı</h3>
+            <p>Min: <span class="deger" id="isikMin">-</span></p>
+            <p>Max: <span class="deger" id="isikMax">-</span></p>
+            <p>Ort: <span class="deger" id="isikOrt">-</span></p>
+            <p>Varyans: <span class="deger" id="isikVaryans">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        const ctxSicaklik = document.getElementById('sicaklikGrafik').getContext('2d');
+        const ctxNem = document.getElementById('nemGrafik').getContext('2d');
+        const ctxIsik = document.getElementById('isikGrafik').getContext('2d'); // Işık context'i
+
+        let sicaklikChart = new Chart(ctxSicaklik, { type: 'line', data: { labels: [], datasets: [{ label: 'Sıcaklık', data: [], borderColor: 'red', tension: 0.3 }] }});
+        let nemChart = new Chart(ctxNem, { type: 'line', data: { labels: [], datasets: [{ label: 'Nem', data: [], borderColor: 'blue', tension: 0.3 }] }});
+        let isikChart = new Chart(ctxIsik, { type: 'line', data: { labels: [], datasets: [{ label: 'Işık Miktarı', data: [], borderColor: 'orange', tension: 0.3 }] }});
+
+        // Varyans hesaplaması eklendi
+        function istatistikHesapla(dizi) {
+            if(dizi.length === 0) return {min: 0, max: 0, ort: 0, varyans: 0};
+            
+            let min = Math.min(...dizi).toFixed(1);
+            let max = Math.max(...dizi).toFixed(1);
+            
+            // Ortalama (Mean)
+            let ort_val = dizi.reduce((a,b) => a+b, 0) / dizi.length;
+            let ort = ort_val.toFixed(1);
+            
+            // Varyans (Variance) = Sum( (x - mean)^2 ) / N
+            let varyans_val = dizi.reduce((a, b) => a + Math.pow(b - ort_val, 2), 0) / dizi.length;
+            let varyans = varyans_val.toFixed(2);
+
+            return {min, max, ort, varyans};
+        }
+
+        async function veriGuncelle() {
+            const response = await fetch('/api/veriler');
+            const veriler = await response.json();
+
+            let zamanlar = veriler.map(v => v.zaman.split('T')[1].replace('Z',''));
+            let sicakliklar = veriler.map(v => v.sicaklik);
+            let nemler = veriler.map(v => v.nem);
+            let isiklar = veriler.map(v => v.isik); // Işık verilerini çekiyoruz
+
+            // Grafikleri güncelle
+            sicaklikChart.data.labels = zamanlar; sicaklikChart.data.datasets[0].data = sicakliklar; sicaklikChart.update();
+            nemChart.data.labels = zamanlar; nemChart.data.datasets[0].data = nemler; nemChart.update();
+            isikChart.data.labels = zamanlar; isikChart.data.datasets[0].data = isiklar; isikChart.update(); // Işık grafiği güncelleme
+
+            // İstatistikleri güncelle (Sıcaklık)
+            let sicaklikIst = istatistikHesapla(sicakliklar);
+            document.getElementById('sicaklikMin').innerText = sicaklikIst.min;
+            document.getElementById('sicaklikMax').innerText = sicaklikIst.max;
+            document.getElementById('sicaklikOrt').innerText = sicaklikIst.ort;
+            document.getElementById('sicaklikVaryans').innerText = sicaklikIst.varyans;
+
+            // İstatistikleri güncelle (Nem)
+            let nemIst = istatistikHesapla(nemler);
+            document.getElementById('nemMin').innerText = nemIst.min;
+            document.getElementById('nemMax').innerText = nemIst.max;
+            document.getElementById('nemOrt').innerText = nemIst.ort;
+            document.getElementById('nemVaryans').innerText = nemIst.varyans;
+            
+            // İstatistikleri güncelle (Işık)
+            let isikIst = istatistikHesapla(isiklar);
+            document.getElementById('isikMin').innerText = isikIst.min;
+            document.getElementById('isikMax').innerText = isikIst.max;
+            document.getElementById('isikOrt').innerText = isikIst.ort;
+            document.getElementById('isikVaryans').innerText = isikIst.varyans;
+        }
+
+        setInterval(veriGuncelle, 1000);
+    </script>
+</body>
+</html>
