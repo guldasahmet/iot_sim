@@ -22,7 +22,7 @@ veritabani_kur()
 
 # --- 2. MQTT SUBSCRIBER AYARLARI ---
 BROKER = "127.0.0.1"
-TOPIC = "btu_01/telemetry"
+TOPIC = "11/telemetry"
 
 def on_connect(client, userdata, flags, rc):
     print(f"MQTT Broker'a bağlanıldı! Kanala abone olunuyor: {TOPIC}")
@@ -30,13 +30,12 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     try:
-        # Gelen MQTT mesajını JSON olarak çöz
         veri = json.loads(msg.payload.decode())
-        
         zaman = veri['timestamp']
-        sicaklik = veri['values']['sicaklik']
-        nem = veri['nem']
-        isik = veri['isik']
+        values = veri.get('values', {})
+        sicaklik = values.get('sicaklik', 0)
+        nem = values.get('nem', 0)
+        isik = values.get('isik', 0)
 
         # Veritabanına kaydet
         conn = sqlite3.connect('sensor_verileri.db')
@@ -46,16 +45,24 @@ def on_message(client, userdata, msg):
         conn.commit()
         conn.close()
         
-        print(f"MQTT'den BİLGİ ALINDI -> Sıcaklık: {sicaklik} | Nem: {nem} | Işık: {isik}")
+        print(f"MQTT'den bilgi alındı -> Sıcaklık: {sicaklik} | Nem: {nem} | Işık: {isik}")
     except Exception as e:
         print("MQTT Mesaj işleme hatası:", e)
 
-# MQTT istemcisini başlat ve arka planda çalıştır
-mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, "Sunucu_Subscriber")
-mqtt_client.on_connect = on_connect
-mqtt_client.on_message = on_message
-mqtt_client.connect(BROKER, 1883)
-mqtt_client.loop_start() # Bu komut MQTT dinleme işlemini Flask'ı bloklamadan arka planda yürütür
+def mqtt_baslat():
+    try:
+        mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, "Sunucu_Subscriber")
+        mqtt_client.on_connect = on_connect
+        mqtt_client.on_message = on_message
+        mqtt_client.connect(BROKER, 1883)
+        mqtt_client.loop_start()
+        return mqtt_client
+    except Exception as e:
+        print("MQTT başlatılamadı, web arayüzü yine de çalışacak:", e)
+        return None
+
+
+mqtt_client = mqtt_baslat()
 
 # --- 3. WEB ARAYÜZÜ VE API ---
 @app.route('/', methods=['GET'])

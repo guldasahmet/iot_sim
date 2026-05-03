@@ -1,12 +1,16 @@
 # BLM-0482 — Nesnelerin İnterneti Simülasyon Ödevi
 
-Bu depo, ders ödevi kapsamında geliştirilen IoT simülasyon projesini içerir. Proje; simülasyon veri üreticisi (publisher), yerel MQTT sunucusu kurulumu ve analiz/depolama (subscriber) bileşenlerinden oluşur.
+**Konu:** Topraklı Tarımda Isıtma Sistemi
+
+**Takım No:** 11
+
+Bu depo, takım 11 için hazırlanan topraklı tarımda ısıtma sistemi simülasyonunu içerir. Proje; sensör verisi üreten publisher, yerel MQTT altyapısı ve veriyi alan, kaydeden ve analiz eden subscriber / web arayüzü bileşenlerinden oluşur.
 
 ## Proje Kapsamı
-Takımın kullanacağı MQTT topic formatı:
+Kullanılan MQTT topic formatı:
 
 ```
-<takim_no>/telemetry
+11/telemetry
 ```
 
 Gönderilen telemetry verileri JSON formatında olmalıdır. Örnek:
@@ -29,16 +33,26 @@ Gönderilen telemetry verileri JSON formatında olmalıdır. Örnek:
 - Nem (nem)
 - Işık miktarı (isik)
 
+## Proje Amacı
+Topraklı tarım uygulamalarında ısıtma aksiyonunun otonom yönetimini modellemek; bitkinin ihtiyaç duyacağı sıcaklığı ortam sıcaklığına bağlı olarak ayarlamak ve bu süreci MQTT tabanlı telemetry akışıyla izlemek.
+
+## Senaryo
+Sistemde üç farklı bitki seçimi dikkate alınmalıdır:
+- Marul
+- Nane
+- Fesleğen
+
+Seçilen bitkiye göre ısıtma rejimi değişmelidir. Arayüzde sensörler için zaman serisi grafikleri, en düşük / en yüksek / ortalama / varyans değerleri ve tek sayfalık gösterim sağlanır.
+
 ## Dosya Yapısı
-- `app.py` — Basit web arayüzü (opsiyonel)
-- `publsiher.py` — Periyodik veri üreten ve `takim_no/telemetry` topic'ine yayın yapan betik
-- `subscriber.py` — (opsiyonel, örnek) topic'i dinleyip veritabanına kaydeden betik
-- `templates/index.html` — Frontend
-- `sensor_verileri.db` — SQLite veritabanı (örnek)
+- `app.py` — MQTT subscriber + Flask tabanlı yönetim arayüzü
+- `publsiher.py` — Periyodik veri üreten ve `11/telemetry` topic'ine yayın yapan betik
+- `templates/index.html` — Dark mode yönetim arayüzü
+- `sensor_verileri.db` — SQLite veritabanı
 
 ## Gereksinimler
 - Python 3.8+
-- Önerilen paketler: `paho-mqtt`, `flask` (web için), `pandas`, `matplotlib`, `sqlite3` (standart)
+- Önerilen paketler: `paho-mqtt`, `flask`, `pandas`, `matplotlib`
 
 Örnek kurulum:
 
@@ -65,28 +79,29 @@ Ya da işletim sisteminize uygun Mosquitto kurulumu yapabilirsiniz.
 Publisher (örnek):
 
 ```bash
-python publsiher.py --team 01
+python publsiher.py
 ```
 
-Subscriber (örnek):
+Subscriber / arayüz (örnek):
 
 ```bash
-python subscriber.py --team 01
+python app.py
 ```
 
-Bu komutlar betiklerinizdeki argüman isimlerine göre uyarlanmalıdır (`--team` yerine `TAKIM_NO` environment değişkeni de kullanılabilir).
+Not: Publisher ve subscriber aynı broker adresini kullanmalıdır. Topic doğrudan `11/telemetry` olarak ayarlanmıştır.
 
 ## Veritabanı ve Analiz
 - Subscriber aldığı JSON verilerini SQLite veritabanına kaydeder (`sensor_verileri.db`).
-- Her sensör için ayrı zaman serisi grafiği oluşturulacaktır.
-- Her grafiğin yanında ilgili sensör verilerinin minimum, maksimum, ortalama ve varyans değerleri gösterilecektir.
+- Her sensör için ayrı zaman serisi grafiği oluşturulur.
+- Her grafiğin yanında ilgili sensör verilerinin minimum, maksimum, ortalama ve varyans değerleri gösterilir.
 
 ## Görsel Tasarım
-Tek sayfada sensör analiz sonuçları alt alta gösterilecek şekilde tasarlanmalıdır. `templates/index.html` örnek bir yerleşim sunar; istenirse Flask üzerinden dinamik olarak veriler render edilebilir.
+Tek sayfada sensör analiz sonuçları alt alta gösterilecek şekilde tasarlanmıştır. `templates/index.html` dosyası modern dark mode bir arayüz sunar.
 
 ## Değerlendirme
 - Proje raporu (e-kampüs) teslimi gereklidir.
 - Haberleşme topic'i ve JSON formatı raporda belirtilen kurallara uygun olmalıdır.
+- Bitki seçimine göre ısıtma rejimi farklılaştırılmalıdır.
 
 ---
-Geliştirici
+Geliştirici: Ahmet

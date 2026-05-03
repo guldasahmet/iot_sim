@@ -7,9 +7,8 @@ from datetime import datetime
 # --- AYARLAR ---
 BROKER = "127.0.0.1" # Yerel MQTT Broker adresi
 PORT = 1883
-TOPIC = "btu_01/telemetry" 
+TOPIC = "11/telemetry"
 
-# MQTT İstemcisini oluştur
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, "Simulasyon_Publisher")
 client.connect(BROKER, PORT)
 
@@ -28,10 +27,10 @@ try:
         veri_paketi = {
             "sensor_id": "temp_01",
             "values": {
-                "sicaklik": sanal_sicaklik
+                "sicaklik": sanal_sicaklik,
+                "nem": sanal_nem,
+                "isik": sanal_isik
             },
-            "nem": sanal_nem,
-            "isik": sanal_isik,
             "unit": "metric",
             "timestamp": zaman
         }
