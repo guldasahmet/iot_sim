@@ -1,10 +1,8 @@
-# BLM-0482 — Nesnelerin İnterneti Simülasyon Ödevi
-
-**Konu:** Topraklı Tarımda Isıtma Sistemi
+# BLM-0482 | Takım 11 | MQTT Tabanlı Telemetry Simülasyonu
 
 **Takım No:** 11
 
-Bu depo, takım 11 için hazırlanan topraklı tarımda ısıtma sistemi simülasyonunu içerir. Proje; sensör verisi üreten publisher, yerel MQTT altyapısı ve veriyi alan, kaydeden ve analiz eden subscriber / web arayüzü bileşenlerinden oluşur.
+Bu depo, BLM-0482 ödevi kapsamında takım 11 için hazırlanmış MQTT tabanlı telemetry simülasyonunu içerir. Çözüm; publisher, yerel MQTT altyapısı, subscriber ve yönetim arayüzünden oluşur.
 
 ## Proje Kapsamı
 Kullanılan MQTT topic formatı:
@@ -34,19 +32,15 @@ Gönderilen telemetry verileri JSON formatında olmalıdır. Örnek:
 - Işık miktarı (isik)
 
 ## Proje Amacı
-Topraklı tarım uygulamalarında ısıtma aksiyonunun otonom yönetimini modellemek; bitkinin ihtiyaç duyacağı sıcaklığı ortam sıcaklığına bağlı olarak ayarlamak ve bu süreci MQTT tabanlı telemetry akışıyla izlemek.
+MQTT altyapısı üzerinden periyodik olarak üretilen telemetry verilerini yayınlamak, bu verileri dinleyip veritabanına kaydetmek ve tek sayfalık bir arayüzde grafik + istatistik olarak sunmak.
 
 ## Senaryo
-Sistemde üç farklı bitki seçimi dikkate alınmalıdır:
-- Marul
-- Nane
-- Fesleğen
-
-Seçilen bitkiye göre ısıtma rejimi değişmelidir. Arayüzde sensörler için zaman serisi grafikleri, en düşük / en yüksek / ortalama / varyans değerleri ve tek sayfalık gösterim sağlanır.
+Takım 11 için hazırlanan çözümde sıcaklık, nem ve ışık miktarı sensör verileri `11/telemetry` topic'i üzerinden izlenir. Arayüzde her sensör için zaman serisi grafiği, minimum, maksimum, ortalama ve varyans değerleri ayrı ayrı gösterilir.
 
 ## Dosya Yapısı
-- `app.py` — MQTT subscriber + Flask tabanlı yönetim arayüzü
-- `publsiher.py` — Periyodik veri üreten ve `11/telemetry` topic'ine yayın yapan betik
+- `publisher.py` — Periyodik veri üreten ve `11/telemetry` topic'ine yayın yapan betik
+- `subscriber.py` — MQTT'den gelen telemetry verisini dinleyip veritabanına kaydeden betik
+- `app.py` — Flask tabanlı yönetim arayüzü ve grafik API'si
 - `templates/index.html` — Dark mode yönetim arayüzü
 - `sensor_verileri.db` — SQLite veritabanı
 
@@ -79,16 +73,22 @@ Ya da işletim sisteminize uygun Mosquitto kurulumu yapabilirsiniz.
 Publisher (örnek):
 
 ```bash
-python publsiher.py
+python publisher.py
 ```
 
-Subscriber / arayüz (örnek):
+Subscriber (örnek):
+
+```bash
+python subscriber.py
+```
+
+Web arayüzü (örnek):
 
 ```bash
 python app.py
 ```
 
-Not: Publisher ve subscriber aynı broker adresini kullanmalıdır. Topic doğrudan `11/telemetry` olarak ayarlanmıştır.
+Not: Publisher, subscriber ve web arayüzü aynı broker adresini kullanmalıdır. Topic doğrudan `11/telemetry` olarak ayarlanmıştır.
 
 ## Veritabanı ve Analiz
 - Subscriber aldığı JSON verilerini SQLite veritabanına kaydeder (`sensor_verileri.db`).
@@ -101,7 +101,7 @@ Tek sayfada sensör analiz sonuçları alt alta gösterilecek şekilde tasarlanm
 ## Değerlendirme
 - Proje raporu (e-kampüs) teslimi gereklidir.
 - Haberleşme topic'i ve JSON formatı raporda belirtilen kurallara uygun olmalıdır.
-- Bitki seçimine göre ısıtma rejimi farklılaştırılmalıdır.
+- Tüm telemetry verileri JSON formatında iletilmelidir.
 
 ---
 Geliştirici: Ahmet

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLM-0482 | Takım 11 | Topraklı Tarımda Isıtma Sistemi</title>
+    <title>Takım 11 | MQTT Tabanlı Telemetry Simülasyonu</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -184,9 +184,9 @@
         <section class="hero">
             <div class="hero-top">
                 <div>
-                    <div class="badge">● Canlı Telemetry Paneli</div>
-                    <h1>Topraklı Tarımda Isıtma Sistemi</h1>
-                    <p>Takım 11 için hazırlanan bu panel, MQTT üzerinden gelen sıcaklık, nem ve ışık telemetry verilerini tek sayfada gösterir; ısıtma kararları için analiz sonuçlarını modern dark mode kartlarda sunar.</p>
+                    <div class="badge">● Takım 11</div>
+                    <h1>MQTT Tabanlı Telemetry Simülasyonu</h1>
+                    <p>Bu panel, `11/telemetry` topic'i üzerinden yayınlanan sıcaklık, nem ve ışık verilerini alır; veritabanına kaydedilen verilerin grafikleri ve istatistikleri burada görselleştirir.</p>
                 </div>
             </div>
             <div class="topic">Topic: <strong>11/telemetry</strong></div>
@@ -198,12 +198,12 @@
                 <div class="grafik-alani">
                     <div class="sensor-title">
                         <h3>Sıcaklık</h3>
-                        <span>°C</span>
+                        <span>Telemetry</span>
                     </div>
                     <canvas id="sicaklikGrafik"></canvas>
                 </div>
                 <div class="istatistik-alani">
-                    <h3>Sıcaklık Analizi</h3>
+                    <h3>Sıcaklık Verileri</h3>
                     <p>Min <span class="deger" id="sicaklikMin">-</span></p>
                     <p>Max <span class="deger" id="sicaklikMax">-</span></p>
                     <p>Ort <span class="deger" id="sicaklikOrt">-</span></p>
@@ -216,12 +216,12 @@
                 <div class="grafik-alani">
                     <div class="sensor-title">
                         <h3>Nem</h3>
-                        <span>%</span>
+                        <span>Telemetry</span>
                     </div>
                     <canvas id="nemGrafik"></canvas>
                 </div>
                 <div class="istatistik-alani">
-                    <h3>Nem Analizi</h3>
+                    <h3>Nem Verileri</h3>
                     <p>Min <span class="deger" id="nemMin">-</span></p>
                     <p>Max <span class="deger" id="nemMax">-</span></p>
                     <p>Ort <span class="deger" id="nemOrt">-</span></p>
@@ -234,12 +234,12 @@
                 <div class="grafik-alani">
                     <div class="sensor-title">
                         <h3>Işık Miktarı</h3>
-                        <span>lux</span>
+                        <span>Telemetry</span>
                     </div>
                     <canvas id="isikGrafik"></canvas>
                 </div>
                 <div class="istatistik-alani">
-                    <h3>Işık Analizi</h3>
+                    <h3>Işık Verileri</h3>
                     <p>Min <span class="deger" id="isikMin">-</span></p>
                     <p>Max <span class="deger" id="isikMax">-</span></p>
                     <p>Ort <span class="deger" id="isikOrt">-</span></p>

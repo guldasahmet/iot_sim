@@ -1,11 +1,9 @@
 from flask import Flask, render_template, jsonify
 import sqlite3
-import json
-import paho.mqtt.client as mqtt
 
 app = Flask(__name__)
 
-# --- 1. VERİTABANI KURULUMU ---
+
 def veritabani_kur():
     conn = sqlite3.connect('sensor_verileri.db')
     c = conn.cursor()
@@ -18,51 +16,7 @@ def veritabani_kur():
     conn.commit()
     conn.close()
 
-veritabani_kur()
 
-# --- 2. MQTT SUBSCRIBER AYARLARI ---
-BROKER = "127.0.0.1"
-TOPIC = "11/telemetry"
-
-def on_connect(client, userdata, flags, rc):
-    print(f"MQTT Broker'a bağlanıldı! Kanala abone olunuyor: {TOPIC}")
-    client.subscribe(TOPIC)
-
-def on_message(client, userdata, msg):
-    try:
-        veri = json.loads(msg.payload.decode())
-        zaman = veri['timestamp']
-        values = veri.get('values', {})
-        sicaklik = values.get('sicaklik', 0)
-        nem = values.get('nem', 0)
-        isik = values.get('isik', 0)
-
-        # Veritabanına kaydet
-        conn = sqlite3.connect('sensor_verileri.db')
-        c = conn.cursor()
-        c.execute("INSERT INTO olcumler (zaman, sicaklik, nem, isik) VALUES (?, ?, ?, ?)", 
-                  (zaman, sicaklik, nem, isik))
-        conn.commit()
-        conn.close()
-        
-        print(f"MQTT'den bilgi alındı -> Sıcaklık: {sicaklik} | Nem: {nem} | Işık: {isik}")
-    except Exception as e:
-        print("MQTT Mesaj işleme hatası:", e)
-
-def mqtt_baslat():
-    try:
-        mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, "Sunucu_Subscriber")
-        mqtt_client.on_connect = on_connect
-        mqtt_client.on_message = on_message
-        mqtt_client.connect(BROKER, 1883)
-        mqtt_client.loop_start()
-        return mqtt_client
-    except Exception as e:
-        print("MQTT başlatılamadı, web arayüzü yine de çalışacak:", e)
-        return None
-
-
-mqtt_client = mqtt_baslat()
 
 # --- 3. WEB ARAYÜZÜ VE API ---
 @app.route('/', methods=['GET'])
