@@ -1,21 +1,16 @@
 # BLM-0482 | Takım 11 | MQTT Tabanlı Telemetry Simülasyonu
 
-**Takım No:** 11
+Bu depo, BLM-0482 ödevi için hazırlanmış MQTT tabanlı telemetry simülasyonunu içerir. Çözüm; veri üreten `publisher.py`, veriyi kaydeden `subscriber.py` ve grafikli yönetim arayüzünü sunan `app.py` dosyalarından oluşur.
 
-Bu depo, BLM-0482 ödevi kapsamında takım 11 için hazırlanmış MQTT tabanlı telemetry simülasyonunu içerir. Çözüm; publisher, yerel MQTT altyapısı, subscriber ve yönetim arayüzünden oluşur.
+## Kısa Özet
+Sistem, yerel bir MQTT broker üzerinden `11/telemetry` topic'i ile veri taşır. Publisher 100 sanal sensörden sıcaklık, nem ve ışık verisi üretir; subscriber bu verileri SQLite veritabanına yazar; web arayüzü ise sensör bazlı grafik ve istatistikleri gösterir.
 
-## Proje Kapsamı
-Kullanılan MQTT topic formatı:
-
-```
-11/telemetry
-```
-
-Gönderilen telemetry verileri JSON formatında olmalıdır. Örnek:
+## Veri Formatı
+Gönderilen telemetry verileri JSON formatındadır. Örnek payload:
 
 ```json
 {
-	"sensor_id": "temp_01",
+	"sensor_id": "temp_001",
 	"values": {
 		"sicaklik": 24.5,
 		"nem": 65,
@@ -26,39 +21,31 @@ Gönderilen telemetry verileri JSON formatında olmalıdır. Örnek:
 }
 ```
 
-Ölçülen / üretilecek nicelikler:
-- Sıcaklık (sicaklik)
-- Nem (nem)
-- Işık miktarı (isik)
+Üretilen ölçümler:
+- Sıcaklık (`sicaklik`)
+- Nem (`nem`)
+- Işık miktarı (`isik`)
 
-## Proje Amacı
-MQTT altyapısı üzerinden periyodik olarak üretilen telemetry verilerini yayınlamak, bu verileri dinleyip veritabanına kaydetmek ve tek sayfalık bir arayüzde grafik + istatistik olarak sunmak.
-
-## Senaryo
-Takım 11 için hazırlanan çözümde sıcaklık, nem ve ışık miktarı sensör verileri `11/telemetry` topic'i üzerinden izlenir. Arayüzde her sensör için zaman serisi grafiği, minimum, maksimum, ortalama ve varyans değerleri ayrı ayrı gösterilir.
-
-## Dosya Yapısı
-- `publisher.py` — Periyodik veri üreten ve `11/telemetry` topic'ine yayın yapan betik
-- `subscriber.py` — MQTT'den gelen telemetry verisini dinleyip veritabanına kaydeden betik
-- `app.py` — Flask tabanlı yönetim arayüzü ve grafik API'si
-- `templates/index.html` — Dark mode yönetim arayüzü
-- `sensor_verileri.db` — SQLite veritabanı
+## Mimari
+- `publisher.py` gerçekçi günlük döngüye göre veri üretir ve `11/telemetry` topic'ine yayın yapar.
+- `subscriber.py` MQTT mesajlarını dinler, JSON verisini çözer ve `sensor_verileri.db` içine kaydeder.
+- `app.py` Flask tabanlı API ve web arayüzünü çalıştırır.
+- `templates/index.html` sensör seçimi, çizimler ve istatistik kartlarını içerir.
 
 ## Gereksinimler
 - Python 3.8+
-- Önerilen paketler: `paho-mqtt`, `flask`, `pandas`, `matplotlib`
+- Paketler: `paho-mqtt`, `flask`
 
-Örnek kurulum:
+İsteğe bağlı sanal ortam kurulumu:
 
 ```bash
 python -m venv .venv
-# Windows PowerShell
 .venv\Scripts\Activate.ps1
-pip install paho-mqtt flask pandas matplotlib
+pip install paho-mqtt flask
 ```
 
-## Yerel MQTT Sunucusu (öneri)
-Yerel MQTT sunucusu için Eclipse Mosquitto kullanılabilir.
+## MQTT Broker
+Kod, varsayılan olarak `127.0.0.1:1883` adresindeki yerel broker'a bağlanır. Geliştirme için Eclipse Mosquitto kullanılabilir.
 
 Docker ile hızlı başlatma:
 
@@ -66,42 +53,36 @@ Docker ile hızlı başlatma:
 docker run -d --name mosquitto -p 1883:1883 eclipse-mosquitto
 ```
 
-Ya da işletim sisteminize uygun Mosquitto kurulumu yapabilirsiniz.
-
-## Çalıştırma
-
-Publisher (örnek):
-
-```bash
-python publisher.py
-```
-
-Subscriber (örnek):
+## Çalıştırma Sırası
+1. MQTT broker'ı başlatın.
+2. Subscriber'ı çalıştırın:
 
 ```bash
 python subscriber.py
 ```
 
-Web arayüzü (örnek):
+3. Publisher'ı çalıştırın:
+
+```bash
+python publisher.py
+```
+
+4. Web arayüzünü açın:
 
 ```bash
 python app.py
 ```
 
-Not: Publisher, subscriber ve web arayüzü aynı broker adresini kullanmalıdır. Topic doğrudan `11/telemetry` olarak ayarlanmıştır.
+Arayüz varsayılan olarak `http://127.0.0.1:5000` adresinde çalışır. Topic değeri sabit olarak `11/telemetry` şeklinde tanımlıdır.
 
-## Veritabanı ve Analiz
-- Subscriber aldığı JSON verilerini SQLite veritabanına kaydeder (`sensor_verileri.db`).
-- Her sensör için ayrı zaman serisi grafiği oluşturulur.
-- Her grafiğin yanında ilgili sensör verilerinin minimum, maksimum, ortalama ve varyans değerleri gösterilir.
+## Veritabanı
+Subscriber, gelen kayıtları `sensor_verileri.db` dosyasında `olcumler` tablosuna ekler. Web arayüzü seçilen sensör için son 50 kaydı getirir ve sıcaklık, nem, ışık için grafik oluşturur.
 
-## Görsel Tasarım
-Tek sayfada sensör analiz sonuçları alt alta gösterilecek şekilde tasarlanmıştır. `templates/index.html` dosyası modern dark mode bir arayüz sunar.
+## Arayüz
+`templates/index.html`, koyu temalı tek sayfalık bir panel sunar. Her sensör için ayrı grafik ve minimum, maksimum, ortalama, varyans değerleri gösterilir. Sensör seçimi arayüz üzerinden yapılır.
 
-## Değerlendirme
-- Proje raporu (e-kampüs) teslimi gereklidir.
-- Haberleşme topic'i ve JSON formatı raporda belirtilen kurallara uygun olmalıdır.
-- Tüm telemetry verileri JSON formatında iletilmelidir.
+## Repo
+Uzak depo: https://github.com/guldasahmet/iot_sim
 
 ---
 Geliştirici: Ahmet
