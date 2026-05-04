@@ -189,7 +189,18 @@
                     <p>Bu panel, `11/telemetry` topic'i üzerinden yayınlanan sıcaklık, nem ve ışık verilerini alır; veritabanına kaydedilen verilerin grafikleri ve istatistikleri burada görselleştirir.</p>
                 </div>
             </div>
-            <div class="topic">Topic: <strong>11/telemetry</strong></div>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <div class="topic">Topic: <strong>11/telemetry</strong></div>
+                
+                <div class="topic">
+                    <label for="sensorSelect" style="margin-right: 8px; color: var(--muted);">Aktif Sensör:</label>
+                    <!-- SADECE SENSÖRLER OLACAK ŞEKİLDE AYARLANDI -->
+                    <select id="sensorSelect" onchange="veriGuncelle()" style="background: transparent; color: #dbeafe; border: none; outline: none; font-size: 0.95rem; font-weight: bold; cursor: pointer;">
+                        <!-- JS ile 100 sensör buraya eklenecek -->
+                    </select>
+                </div>
+            </div>
         </section>
 
         <main class="grid">
@@ -252,7 +263,7 @@
     <script>
         const ctxSicaklik = document.getElementById('sicaklikGrafik').getContext('2d');
         const ctxNem = document.getElementById('nemGrafik').getContext('2d');
-        const ctxIsik = document.getElementById('isikGrafik').getContext('2d'); // Işık context'i
+        const ctxIsik = document.getElementById('isikGrafik').getContext('2d');
 
         const chartBaseOptions = {
             responsive: true,
@@ -260,11 +271,7 @@
             animation: { duration: 350 },
             plugins: {
                 legend: {
-                    labels: {
-                        color: '#e5e7eb',
-                        usePointStyle: true,
-                        pointStyle: 'circle'
-                    }
+                    labels: { color: '#e5e7eb', usePointStyle: true, pointStyle: 'circle' }
                 },
                 tooltip: {
                     backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -304,60 +311,88 @@
             options: chartBaseOptions
         });
 
-        // Varyans hesaplaması eklendi
         function istatistikHesapla(dizi) {
-            if(dizi.length === 0) return {min: 0, max: 0, ort: 0, varyans: 0};
+            if(dizi.length === 0) return {min: "-", max: "-", ort: "-", varyans: "-"};
             
             let min = Math.min(...dizi).toFixed(1);
             let max = Math.max(...dizi).toFixed(1);
             
-            // Ortalama (Mean)
             let ort_val = dizi.reduce((a,b) => a+b, 0) / dizi.length;
             let ort = ort_val.toFixed(1);
             
-            // Varyans (Variance) = Sum( (x - mean)^2 ) / N
             let varyans_val = dizi.reduce((a, b) => a + Math.pow(b - ort_val, 2), 0) / dizi.length;
             let varyans = varyans_val.toFixed(2);
 
             return {min, max, ort, varyans};
         }
 
-        async function veriGuncelle() {
-            const response = await fetch('/api/veriler');
-            const veriler = await response.json();
-
-            let zamanlar = veriler.map(v => v.zaman.split('T')[1].replace('Z',''));
-            let sicakliklar = veriler.map(v => v.sicaklik);
-            let nemler = veriler.map(v => v.nem);
-            let isiklar = veriler.map(v => v.isik); // Işık verilerini çekiyoruz
-
-            // Grafikleri güncelle
-            sicaklikChart.data.labels = zamanlar; sicaklikChart.data.datasets[0].data = sicakliklar; sicaklikChart.update();
-            nemChart.data.labels = zamanlar; nemChart.data.datasets[0].data = nemler; nemChart.update();
-            isikChart.data.labels = zamanlar; isikChart.data.datasets[0].data = isiklar; isikChart.update(); // Işık grafiği güncelleme
-
-            // İstatistikleri güncelle (Sıcaklık)
-            let sicaklikIst = istatistikHesapla(sicakliklar);
-            document.getElementById('sicaklikMin').innerText = sicaklikIst.min;
-            document.getElementById('sicaklikMax').innerText = sicaklikIst.max;
-            document.getElementById('sicaklikOrt').innerText = sicaklikIst.ort;
-            document.getElementById('sicaklikVaryans').innerText = sicaklikIst.varyans;
-
-            // İstatistikleri güncelle (Nem)
-            let nemIst = istatistikHesapla(nemler);
-            document.getElementById('nemMin').innerText = nemIst.min;
-            document.getElementById('nemMax').innerText = nemIst.max;
-            document.getElementById('nemOrt').innerText = nemIst.ort;
-            document.getElementById('nemVaryans').innerText = nemIst.varyans;
-            
-            // İstatistikleri güncelle (Işık)
-            let isikIst = istatistikHesapla(isiklar);
-            document.getElementById('isikMin').innerText = isikIst.min;
-            document.getElementById('isikMax').innerText = isikIst.max;
-            document.getElementById('isikOrt').innerText = isikIst.ort;
-            document.getElementById('isikVaryans').innerText = isikIst.varyans;
+        // 100 Adet Sensör Seçeneğini Oluşturan Fonksiyon
+        function sensorListesiniOlustur() {
+            const select = document.getElementById('sensorSelect');
+            for (let i = 1; i <= 100; i++) {
+                // Sayıyı 3 haneli formata getiriyoruz (001, 002... 100)
+                let numStr = i.toString().padStart(3, '0');
+                let sId = "temp_" + numStr;
+                
+                let opt = document.createElement('option');
+                opt.value = sId;
+                opt.textContent = `Sensör ${i} (${sId})`;
+                opt.style.color = "black";
+                select.appendChild(opt);
+            }
         }
 
+        async function veriGuncelle() {
+            const seciliSensor = document.getElementById('sensorSelect').value;
+            
+            // Eğer sensör seçilmemişse API'ye istek atma (Sayfa ilk yüklenirken vs.)
+            if(!seciliSensor) return;
+
+            const url = `/api/veriler?sensor_id=${seciliSensor}`;
+
+            try {
+                const response = await fetch(url);
+                const veriler = await response.json();
+
+                let zamanlar = veriler.map(v => v.zaman.split('T')[1].replace('Z',''));
+                let sicakliklar = veriler.map(v => v.sicaklik);
+                let nemler = veriler.map(v => v.nem);
+                let isiklar = veriler.map(v => v.isik);
+
+                // Grafikleri güncelle
+                sicaklikChart.data.labels = zamanlar; sicaklikChart.data.datasets[0].data = sicakliklar; sicaklikChart.update();
+                nemChart.data.labels = zamanlar; nemChart.data.datasets[0].data = nemler; nemChart.update();
+                isikChart.data.labels = zamanlar; isikChart.data.datasets[0].data = isiklar; isikChart.update();
+
+                // İstatistikleri güncelle (Sıcaklık)
+                let sicaklikIst = istatistikHesapla(sicakliklar);
+                document.getElementById('sicaklikMin').innerText = sicaklikIst.min;
+                document.getElementById('sicaklikMax').innerText = sicaklikIst.max;
+                document.getElementById('sicaklikOrt').innerText = sicaklikIst.ort;
+                document.getElementById('sicaklikVaryans').innerText = sicaklikIst.varyans;
+
+                // İstatistikleri güncelle (Nem)
+                let nemIst = istatistikHesapla(nemler);
+                document.getElementById('nemMin').innerText = nemIst.min;
+                document.getElementById('nemMax').innerText = nemIst.max;
+                document.getElementById('nemOrt').innerText = nemIst.ort;
+                document.getElementById('nemVaryans').innerText = nemIst.varyans;
+                
+                // İstatistikleri güncelle (Işık)
+                let isikIst = istatistikHesapla(isiklar);
+                document.getElementById('isikMin').innerText = isikIst.min;
+                document.getElementById('isikMax').innerText = isikIst.max;
+                document.getElementById('isikOrt').innerText = isikIst.ort;
+                document.getElementById('isikVaryans').innerText = isikIst.varyans;
+            } catch(e) {
+                console.error("Veri güncellenemedi", e);
+            }
+        }
+
+        // Sayfa yüklendiğinde 100 sensörü menüye ekle
+        sensorListesiniOlustur();
+
+        // Verileri her saniye güncelle
         setInterval(veriGuncelle, 1000);
     </script>
 </body>

@@ -15,6 +15,7 @@ def veritabani_kur():
     c.execute('''CREATE TABLE IF NOT EXISTS olcumler
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   zaman TEXT,
+                  sensor_id TEXT,
                   sicaklik REAL,
                   nem REAL,
                   isik REAL)''')
@@ -30,6 +31,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     try:
         veri = json.loads(msg.payload.decode())
+        sensor_id = veri.get("sensor_id", "bilinmeyen")
         zaman = veri.get("timestamp")
         values = veri.get("values", {})
         sicaklik = values.get("sicaklik", 0)
@@ -39,13 +41,13 @@ def on_message(client, userdata, msg):
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute(
-            "INSERT INTO olcumler (zaman, sicaklik, nem, isik) VALUES (?, ?, ?, ?)",
-            (zaman, sicaklik, nem, isik),
+            "INSERT INTO olcumler (zaman, sensor_id, sicaklik, nem, isik) VALUES (?, ?, ?, ?, ?)",
+            (zaman, sensor_id, sicaklik, nem, isik),
         )
         conn.commit()
         conn.close()
 
-        print(f"MQTT'den bilgi alındı -> Sıcaklık: {sicaklik} | Nem: {nem} | Işık: {isik}")
+        print(f"MQTT'den bilgi alındı -> Sensör: {sensor_id} | Sıcaklık: {sicaklik} | Nem: {nem} | Işık: {isik}")
     except Exception as e:
         print("MQTT mesaj işleme hatası:", e)
 

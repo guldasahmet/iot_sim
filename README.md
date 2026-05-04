@@ -32,6 +32,15 @@ Gönderilen telemetry verileri JSON formatındadır. Örnek payload:
 - `app.py` Flask tabanlı API ve web arayüzünü çalıştırır.
 - `templates/index.html` sensör seçimi, çizimler ve istatistik kartlarını içerir.
 
+## Veri Nasıl Oluşturuluyor?
+Veri üretimi `publisher.py` içinde yapılır. Betik her saniye 100 sanal sensör için yeni ölçüm üretir ve her sensörün durumunu hafızada tutar.
+
+- Önce günün saatine göre hedef sıcaklık, nem ve ışık değerleri hesaplanır.
+- Sıcaklık ve nem için sinüs tabanlı bir günlük döngü kullanılır; sıcaklık gün içinde artar, akşam ve gece düşer.
+- Işık değeri yalnızca 06:00 ile 19:00 arasında üretilir, öğlen saatlerinde zirve yapar ve gece 0'a iner.
+- Her sensörün mevcut değeri, hedef değere doğru küçük bir çekim ve rastgele gürültü eklenerek güncellenir.
+- Sonuçlar JSON olarak `sensor_id`, `values`, `unit` ve `timestamp` alanlarıyla yayınlanır.
+
 ## Gereksinimler
 - Python 3.8+
 - Paketler: `paho-mqtt`, `flask`
